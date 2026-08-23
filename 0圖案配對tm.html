@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圖案配對遊戲</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: #f5f5f5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Nunito', sans-serif;
+    color: #2B3A55;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    color: #2B3A55;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+  
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2B3A55;
+  }
+  
+  .instruction {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #666;
+  }
+  
+  .image-buttons {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .image-btn {
+    width: 80px;
+    height: 80px;
+    border: 0.5px solid #ccc;
+    border-radius: 6px;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .image-btn:hover {
+    border-color: #999;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .image-btn img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .image-btn[data-selected="true"] {
+    border: 2px solid #378ADD;
+    box-shadow: 0 0 0 2px rgba(55, 138, 221, 0.2);
+  }
+  
+  .sentences {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .sentence-btn {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #2B3A55;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+  }
+  .sentence-btn:hover {
+    border-color: #999;
+    background: #f9f9f9;
+  }
+  .sentence-btn[data-selected="true"] {
+    background: #FFF4E6;
+    border-color: #D9860E;
+    color: #D9860E;
+    font-weight: 500;
+  }
+  
+  .sentence-btn.correct {
+    background: #E8F9EF;
+    border-color: #4CAF7D;
+    color: #2B6E4F;
+    cursor: default;
+  }
+  
+  .sentence-btn.incorrect {
+    background: #FDE8E8;
+    border-color: #E24B4A;
+    color: #8B2323;
+  }
+
+  .review-container {
+    display: none;
+    margin-top: 20px;
+  }
+  .review-container.show {
+    display: block;
+  }
+
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .review-header h2 {
+    font-size: 20px;
+    margin: 0;
+  }
+  .back-btn {
+    background: white;
+    color: #378ADD;
+    border: 1px solid #378ADD;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .back-btn:hover {
+    background: #EAF3FC;
+  }
+
+  .review-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .review-row img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: #f9f9f9;
+    padding: 4px;
+  }
+  .review-row-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #2B3A55;
+  }
+  
+  .result-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .result-overlay.show {
+    display: flex;
+  }
+  
+  .result-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .result-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2B3A55;
+    margin-bottom: 12px;
+  }
+  
+  .result-stat {
+    margin-bottom: 16px;
+  }
+  
+  .result-stat-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 4px;
+  }
+  
+  .result-stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #378ADD;
+  }
+
+  .result-button-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .result-button {
+    flex: 1;
+    background: #378ADD;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .result-button:hover {
+    background: #2970c7;
+  }
+
+  .result-button.secondary {
+    background: white;
+    color: #378ADD;
+    border: 1px solid #378ADD;
+  }
+  .result-button.secondary:hover {
+    background: #EAF3FC;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>圖案配對遊戲</h1>
+  <p class="subtitle">點擊圖片，再點擊對應的句子</p>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">⏱ 時間</div>
+      <div class="stat-value" id="timer">0:00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">✓ 配對</div>
+      <div class="stat-value" id="matched">0/6</div>
+    </div>
+  </div>
+
+  <div class="instruction" id="instructionText">選擇一張圖片，然後點擊對應的句子</div>
+
+  <div class="image-buttons" id="imageButtonsContainer"></div>
+
+  <div class="sentences" id="sentencesContainer"></div>
+
+  <div class="review-container" id="reviewContainer">
+    <div class="review-header">
+      <h2>📋 複習</h2>
+      <button class="back-btn" onclick="location.reload()">重新開始</button>
+    </div>
+    <div id="reviewList"></div>
+  </div>
+
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-modal">
+      <div class="result-title">🎉 完成！</div>
+      
+      <div class="result-stat">
+        <div class="result-stat-label">答題時間</div>
+        <div class="result-stat-value" id="finalTime">0:00</div>
+      </div>
+      
+      <div class="result-button-group">
+        <button class="result-button secondary" onclick="reviewAnswers()">複習</button>
+        <button class="result-button" onclick="location.reload()">重新開始</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// shuffleSentences: 1 = 打亂句子順序，0 = 依照原本順序（不打亂）
+const shuffleSentences = 1;
+
+const pairs = [
+  { image: 'https://raw.githubusercontent.com/cecilelin31lin/pic/main/EDG1.png', sentence: 'strong EDG，很多錢' },
+  { image: 'https://raw.githubusercontent.com/cecilelin31lin/pic/main/EDG2.png', sentence: 'medium EDG，很多錢但要養只吃錢的acceptor' },
+  { image: 'https://raw.githubusercontent.com/cecilelin31lin/pic/main/EDG3.png', sentence: 'weak EDG，超共軛積少成多有一點錢' },
+  { image: 'https://raw.githubusercontent.com/cecilelin31lin/pic/main/EWG1.png', sentence: 'strong EWG，NO₂硝基（消極）專門討錢' },
+  { image: 'https://raw.githubusercontent.com/cecilelin31lin/pic/main/EWG2.png', sentence: 'medium EWG，是只會吃錢的acceptor出現' },
+  { image: 'https://raw.githubusercontent.com/cecilelin31lin/pic/main/EWG3.png', sentence: 'weak EWG，鹵素缺一個錢（一個電子）' },
+];
+
+let selectedImageIdx = null;
+let matchedCount = 0;
+let startTime = Date.now();
+let timerInterval = null;
+
+function initGame() {
+  const shuffled = shuffleSentences === 1
+    ? [...pairs].sort(() => Math.random() - 0.5)
+    : [...pairs];
+  
+  document.getElementById('matched').textContent = '0/' + pairs.length;
+  
+  const imageButtonsContainer = document.getElementById('imageButtonsContainer');
+  pairs.forEach((item, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'image-btn';
+    btn.dataset.index = idx;
+    btn.innerHTML = '<img src="' + item.image + '" alt="image">';
+    btn.onclick = () => selectImage(btn, idx);
+    imageButtonsContainer.appendChild(btn);
+  });
+  
+  const sentencesContainer = document.getElementById('sentencesContainer');
+  shuffled.forEach((item, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'sentence-btn';
+    btn.textContent = item.sentence;
+    btn.setAttribute('data-image-idx', pairs.findIndex(p => p.image === item.image));
+    btn.onclick = () => selectSentence(btn);
+    sentencesContainer.appendChild(btn);
+  });
+  
+  startTimer();
+}
+
+function selectImage(btn, idx) {
+  const prevSelected = document.querySelector('.image-btn[data-selected="true"]');
+  if (prevSelected) {
+    prevSelected.removeAttribute('data-selected');
+  }
+  
+  selectedImageIdx = idx;
+  btn.setAttribute('data-selected', 'true');
+}
+
+function selectSentence(btn) {
+  if (selectedImageIdx === null) return;
+  
+  const correctImageIdx = parseInt(btn.getAttribute('data-image-idx'));
+  
+  if (selectedImageIdx === correctImageIdx) {
+    btn.classList.add('correct');
+    btn.onclick = null;
+    
+    matchedCount++;
+    document.getElementById('matched').textContent = matchedCount + '/' + pairs.length;
+    
+    const selectedBtn = document.querySelector('.image-btn[data-selected="true"]');
+    if (selectedBtn) {
+      selectedBtn.style.opacity = '0.5';
+      selectedBtn.onclick = null;
+    }
+    
+    selectedImageIdx = null;
+    
+    if (matchedCount === pairs.length) {
+      showResults();
+    }
+  } else {
+    btn.classList.add('incorrect');
+    setTimeout(() => {
+      btn.classList.remove('incorrect');
+    }, 500);
+  }
+}
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    document.getElementById('timer').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+  }, 100);
+}
+
+function showResults() {
+  clearInterval(timerInterval);
+  
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  const timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+  
+  document.getElementById('finalTime').textContent = timeStr;
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function reviewAnswers() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  document.getElementById('imageButtonsContainer').style.display = 'none';
+  document.getElementById('sentencesContainer').style.display = 'none';
+  document.getElementById('instructionText').style.display = 'none';
+
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = '';
+
+  // 按照原始 pairs 順序，左圖右描述
+  pairs.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'review-row';
+
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = 'image';
+    row.appendChild(img);
+
+    const text = document.createElement('div');
+    text.className = 'review-row-text';
+    text.textContent = item.sentence;
+    row.appendChild(text);
+
+    reviewList.appendChild(row);
+  });
+
+  document.getElementById('reviewContainer').classList.add('show');
+}
+
+initGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>強場、弱場</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 24px 16px 60px;
+        background: #f5f5f5;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Nunito', sans-serif;
+        color: #2B3A55;
+        min-height: 100vh;
+      }
+      .wrap { max-width: 680px; margin: 0 auto; }
+      h1 {
+        text-align: center;
+        font-size: 28px;
+        color: #2B3A55;
+        margin: 0 0 8px;
+      }
+      .subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 24px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background: white;
+        border: 0.5px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 6px;
+      }
+      .stat-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2B3A55;
+      }
+
+      .instruction {
+        background: white;
+        border: 0.5px solid #ddd;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .categories-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .category-box {
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        padding: 12px;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .category-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid;
+      }
+
+      .category-items {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+      }
+
+      .category-item {
+        background: white;
+        border: 0.5px solid #ddd;
+        border-radius: 6px;
+        padding: 8px;
+        font-size: 12px;
+        color: #2B3A55;
+      }
+      .category-item img {
+        max-width: 100%;
+        max-height: 60px;
+        display: block;
+        object-fit: contain;
+      }
+
+      .items-container {
+        background: white;
+        border: 0.5px solid #ddd;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 20px;
+      }
+
+      .items-label {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 8px;
+      }
+
+      .items-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .item-btn {
+        background: white;
+        border: 0.5px solid #ccc;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #2B3A55;
+      }
+      .item-btn:hover {
+        border-color: #999;
+        background: #f9f9f9;
+      }
+      .item-btn[data-selected="true"] {
+        background: #378ADD;
+        color: white;
+        border-color: #378ADD;
+      }
+      .item-btn.incorrect {
+        background: #FDE8E8;
+        border-color: #E24B4A;
+        color: #8B2323;
+      }
+      .item-btn.completed {
+        background: #E8F9EF;
+        border-color: #4CAF7D;
+        color: #2B6E4F;
+        cursor: default;
+        opacity: 0.6;
+      }
+      .item-btn img {
+        max-width: 80px;
+        max-height: 80px;
+        display: block;
+        object-fit: contain;
+      }
+
+      .result-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .result-overlay.show {
+        display: flex;
+      }
+
+      .result-modal {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .result-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2B3A55;
+        margin-bottom: 12px;
+      }
+
+      .result-stat {
+        margin-bottom: 16px;
+      }
+
+      .result-stat-label {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 4px;
+      }
+
+      .result-stat-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #378ADD;
+      }
+
+      .result-button-group {
+        display: flex;
+        gap: 10px;
+      }
+
+      .result-button {
+        flex: 1;
+        background: #378ADD;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .result-button:hover {
+        background: #2970c7;
+      }
+
+      .result-button.secondary {
+        background: white;
+        color: #378ADD;
+        border: 1px solid #378ADD;
+      }
+      .result-button.secondary:hover {
+        background: #EAF3FC;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>強場、弱場</h1>
+      <p class="subtitle">點擊選項，然後點擊分類框</p>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">⏱ 時間</div>
+          <div class="stat-value" id="timer">0:00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">✓ 分類</div>
+          <div class="stat-value" id="matched">0/6</div>
+        </div>
+      </div>
+
+      <div class="instruction">找出符合強場、弱場的選項，注意有些選項是干擾項，不屬於任何分類</div>
+
+      <div class="categories-container" id="categoriesContainer"></div>
+
+      <div class="items-container">
+        <div class="items-label">待分類項目</div>
+        <div class="items-grid" id="itemsContainer"></div>
+      </div>
+
+      <div class="result-overlay" id="resultOverlay">
+        <div class="result-modal">
+          <div class="result-title">🎉 完成！</div>
+
+          <div class="result-stat">
+            <div class="result-stat-label">分類時間</div>
+            <div class="result-stat-value" id="finalTime">0:00</div>
+          </div>
+
+          <div class="result-button-group">
+            <button class="result-button secondary" onclick="reviewAnswers()">複習</button>
+            <button class="result-button" onclick="location.reload()">重新開始</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // itemType: 'text' 或 'image' — 決定 items 裡的內容要當文字顯示還是圖片顯示
+      const itemType = 'text';
+
+      const categories = [
+        { name: '強場', color: '#FFE135' },
+        { name: '弱場', color: '#4FA8D8' },
+      ];
+
+      const items = [
+        // category 填 -1 代表這是「干擾選項」，永遠不屬於任何分類
+        { text: 'low spin', category: 0 },
+        { text: '未鍵結電子少', category: 0 },
+        { text: 'delta E大', category: 0 },
+        { text: '先低滿再高滿', category: 0 },
+        { text: 'square planar', category: 0 },
+        { text: 'dsp2', category: 0 },
+        { text: 'd2sp3', category: 0 },
+        { text: 'high spin', category: 1 },
+        { text: '未鍵結電子多', category: 1 },
+        { text: 'delta E小', category: 1 },
+        { text: '先半滿再全滿', category: 1 },
+        { text: 'sp3d2', category: 1 },
+        { text: 'tetrahedral', category: 1 },
+        { text: 'sp3', category: 1 },
+        { text: '干擾選項一', category: -1 },
+        { text: '干擾選項二', category: -1 }
+      ];
+
+      // 需要被分類完成的項目數（排除干擾項）
+      const totalToMatch = items.filter(item => item.category !== -1).length;
+
+      let selectedItemIdx = null;
+      let matchedCount = 0;
+      let startTime = Date.now();
+      let timerInterval = null;
+      let categoryContainers = [];
+      let itemElements = {};
+
+      function initGame() {
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+
+        document.getElementById('matched').textContent = '0/' + totalToMatch;
+
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        categories.forEach((cat, catIdx) => {
+          const box = document.createElement('div');
+          box.className = 'category-box';
+          box.style.borderColor = cat.color;
+
+          const title = document.createElement('div');
+          title.className = 'category-title';
+          title.textContent = cat.name;
+          title.style.borderColor = cat.color;
+          title.style.color = cat.color;
+
+          const itemsBox = document.createElement('div');
+          itemsBox.className = 'category-items';
+          itemsBox.dataset.categoryIdx = catIdx;
+          itemsBox.onclick = () => selectCategory(catIdx);
+
+          box.appendChild(title);
+          box.appendChild(itemsBox);
+          categoriesContainer.appendChild(box);
+          categoryContainers[catIdx] = itemsBox;
+        });
+
+        const itemsContainer = document.getElementById('itemsContainer');
+        shuffled.forEach((item) => {
+          const realIdx = items.indexOf(item);
+          const btn = document.createElement('button');
+          btn.className = 'item-btn';
+
+          if (itemType === 'image') {
+            const img = document.createElement('img');
+            img.src = item.text;
+            img.alt = 'item';
+            btn.appendChild(img);
+          } else {
+            btn.textContent = item.text;
+          }
+
+          btn.dataset.index = realIdx;
+          btn.onclick = () => selectItem(btn, realIdx);
+          itemsContainer.appendChild(btn);
+          itemElements[realIdx] = btn;
+        });
+
+        startTimer();
+      }
+
+      function selectItem(btn, idx) {
+        const prevSelected = document.querySelector('.item-btn[data-selected="true"]');
+        if (prevSelected) {
+          prevSelected.removeAttribute('data-selected');
+        }
+
+        selectedItemIdx = idx;
+        btn.setAttribute('data-selected', 'true');
+      }
+
+      function selectCategory(catIdx) {
+        if (selectedItemIdx === null) return;
+
+        const item = items[selectedItemIdx];
+        const correctCategory = item.category;
+
+        // 干擾項：永遠判定錯誤，不能放入任何分類框
+        if (correctCategory === -1) {
+          const selectedBtn = document.querySelector('.item-btn[data-selected="true"]');
+          selectedBtn.classList.add('incorrect');
+          setTimeout(() => {
+            selectedBtn.classList.remove('incorrect');
+          }, 500);
+          return;
+        }
+
+        if (correctCategory === catIdx) {
+          const selectedBtn = document.querySelector('.item-btn[data-selected="true"]');
+          selectedBtn.classList.add('completed');
+          selectedBtn.onclick = null;
+          selectedBtn.removeAttribute('data-selected');
+
+          const categoryItem = document.createElement('div');
+          categoryItem.className = 'category-item';
+          if (itemType === 'image') {
+            const img = document.createElement('img');
+            img.src = item.text;
+            img.alt = 'item';
+            categoryItem.appendChild(img);
+          } else {
+            categoryItem.textContent = item.text;
+          }
+          categoryContainers[catIdx].appendChild(categoryItem);
+
+          matchedCount++;
+          document.getElementById('matched').textContent = matchedCount + '/' + totalToMatch;
+
+          selectedItemIdx = null;
+
+          if (matchedCount === totalToMatch) {
+            showResults();
+          }
+        } else {
+          const selectedBtn = document.querySelector('.item-btn[data-selected="true"]');
+          selectedBtn.classList.add('incorrect');
+          setTimeout(() => {
+            selectedBtn.classList.remove('incorrect');
+          }, 500);
+        }
+      }
+
+      function startTimer() {
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const mins = Math.floor(elapsed / 60);
+          const secs = elapsed % 60;
+          document.getElementById('timer').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }, 100);
+      }
+
+      function showResults() {
+        clearInterval(timerInterval);
+
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const mins = Math.floor(elapsed / 60);
+        const secs = elapsed % 60;
+        const timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+        document.getElementById('finalTime').textContent = timeStr;
+        document.getElementById('resultOverlay').classList.add('show');
+      }
+
+      function reviewAnswers() {
+        document.getElementById('resultOverlay').classList.remove('show');
+      }
+
+      initGame();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>記憶配對遊戲 Memory Match</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: #f5f5f5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Nunito', sans-serif;
+    color: #2B3A55;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    color: #2B3A55;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2B3A55;
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  button.restart {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    background: white;
+    color: #378ADD;
+    border: 1px solid #378ADD;
+    transition: all 0.2s;
+  }
+  button.restart:hover {
+    background: #EAF3FC;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    perspective: 800px;
+  }
+  .card {
+    aspect-ratio: 1 / 1;
+    position: relative;
+    cursor: pointer;
+  }
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(.4,.2,.2,1);
+  }
+  .card.flipped .card-inner,
+  .card.matched .card-inner {
+    transform: rotateY(180deg);
+  }
+  .face {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backface-visibility: hidden;
+  }
+  .face.back {
+    background: rgba(176, 196, 222, 0.35);
+    border: 0.5px solid #ddd;
+  }
+  .face.back::after {
+    content: "?";
+    font-size: 24px;
+    font-weight: 700;
+    color: #2B3A55;
+    opacity: 0.5;
+  }
+  .face.front {
+    background: #ffffff;
+    border: 2px solid #378ADD;
+    transform: rotateY(180deg);
+    flex-direction: column;
+    padding: 6px;
+    text-align: center;
+  }
+  .face.front .word {
+    font-weight: 700;
+    font-size: 24px;
+    color: #2B3A55;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .card.matched .face.front {
+    background: rgba(230, 216, 156, 0.35);
+    border-color: #C9B865;
+  }
+  .card.matched .face.front .word {
+    color: #6B5D2A;
+  }
+  .card.matched { animation: pop 0.4s ease; }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  .result-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .result-overlay.show {
+    display: flex;
+  }
+  .result-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .result-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2B3A55;
+    margin-bottom: 20px;
+  }
+  .result-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .result-stat {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .result-stat-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 4px;
+  }
+  .result-stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #378ADD;
+  }
+  .result-button-group {
+    display: flex;
+    gap: 10px;
+  }
+  .result-button {
+    flex: 1;
+    background: #378ADD;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .result-button:hover {
+    background: #2970c7;
+  }
+  .result-button.secondary {
+    background: white;
+    color: #378ADD;
+    border: 1px solid #378ADD;
+  }
+  .result-button.secondary:hover {
+    background: #EAF3FC;
+  }
+
+  .review-container {
+    display: none;
+    margin-top: 20px;
+  }
+  .review-container.show {
+    display: block;
+  }
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .review-header h2 {
+    font-size: 20px;
+    margin: 0;
+  }
+  .back-btn {
+    background: white;
+    color: #378ADD;
+    border: 1px solid #378ADD;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .back-btn:hover {
+    background: #EAF3FC;
+  }
+  .review-item {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #2B3A55;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>記憶配對遊戲 Memory Match</h1>
+  <p class="subtitle">找出正確的配對！</p>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">🔄 翻牌次數</div>
+      <div class="stat-value" id="moves">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">✅ 配對成功</div>
+      <div class="stat-value"><span id="matches">0</span> / 6</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">⏱ 遊戲時長</div>
+      <div class="stat-value" id="timer">0:00</div>
+    </div>
+  </div>
+
+  <div class="button-group">
+    <button class="restart" onclick="startGame()">重新開始</button>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="review-container" id="reviewContainer">
+    <div class="review-header">
+      <h2>📋 複習</h2>
+      <button class="back-btn" onclick="location.reload()">重新開始</button>
+    </div>
+    <div id="reviewList"></div>
+  </div>
+
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-modal">
+      <div class="result-title">🎉 太棒了！全部配對成功！</div>
+
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="result-stat-label">翻牌次數</div>
+          <div class="result-stat-value" id="finalMoves">0</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-label">遊戲時長</div>
+          <div class="result-stat-value" id="finalTime">0:00</div>
+        </div>
+      </div>
+
+      <div class="result-button-group">
+        <button class="result-button secondary" onclick="reviewAnswers()">複習</button>
+        <button class="result-button" onclick="startGame()">重新開始</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const pairs = [
+  { id: 'pair1',  base: 'climb',     past: '爬' },
+  { id: 'pair2',  base: 'third',     past: '第三' },
+  { id: 'pair3',  base: 'person',    past: '人（單）' },
+  { id: 'pair4',  base: 'explain',   past: '解釋' },
+  { id: 'pair5',  base: 'second',    past: '第二' },
+  { id: 'pair6',  base: 'first',     past: '第一' },
+];
+
+let board = document.getElementById('board');
+let movesEl = document.getElementById('moves');
+let matchesEl = document.getElementById('matches');
+let timerEl = document.getElementById('timer');
+let resultOverlay = document.getElementById('resultOverlay');
+let finalMoves = document.getElementById('finalMoves');
+let finalTime = document.getElementById('finalTime');
+
+let flipped = [];
+let lock = false;
+let flipBackTimer = null;
+let moves = 0;
+let matches = 0;
+let startTime = null;
+let timerInterval = null;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return mins + ':' + (secs < 10 ? '0' : '') + secs;
+}
+
+function startTimer() {
+  startTime = Date.now();
+  if (timerInterval) clearInterval(timerInterval);
+
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    timerEl.textContent = formatTime(elapsed);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+function startGame() {
+  moves = 0;
+  matches = 0;
+  flipped = [];
+  lock = false;
+  movesEl.textContent = 0;
+  matchesEl.textContent = 0;
+  timerEl.textContent = '0:00';
+  resultOverlay.classList.remove('show');
+  stopTimer();
+  startTimer();
+
+  let cards = [];
+  pairs.forEach(p => {
+    cards.push({ pairId: p.id, type: 'base', content: p.base });
+    cards.push({ pairId: p.id, type: 'past', content: p.past });
+  });
+  cards = shuffle(cards);
+
+  board.innerHTML = '';
+  cards.forEach((c, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.pairId = c.pairId;
+    card.dataset.index = idx;
+
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    const back = document.createElement('div');
+    back.className = 'face back';
+
+    const front = document.createElement('div');
+    front.className = 'face front';
+    front.innerHTML = '<div class="word">' + c.content + '</div>';
+
+    inner.appendChild(back);
+    inner.appendChild(front);
+    card.appendChild(inner);
+    card.addEventListener('click', () => onCardClick(card));
+    board.appendChild(card);
+
+    // 依照文字長度自動調整字體大小，避免字太長爆版
+    const wordEl = front.querySelector('.word');
+    const len = c.content.length;
+    let fontSize;
+    if (len <= 4) fontSize = 24;
+    else if (len <= 8) fontSize = 18;
+    else if (len <= 14) fontSize = 14;
+    else fontSize = 11;
+    wordEl.style.fontSize = fontSize + 'px';
+  });
+}
+
+function onCardClick(card) {
+  if (card.classList.contains('matched')) return;
+
+  // 若卡片已經翻開（在等待配對結果或翻回中），點擊它可以立即單獨翻回
+  if (card.classList.contains('flipped')) {
+    card.classList.remove('flipped');
+    flipped = flipped.filter(c => c !== card);
+    clearTimeout(flipBackTimer);
+    lock = false;
+    return;
+  }
+
+  if (flipped.length === 2) return; // 理論上不會發生，保險判斷
+
+  card.classList.add('flipped');
+  flipped.push(card);
+
+  if (flipped.length === 2) {
+    moves++;
+    movesEl.textContent = moves;
+    const [a, b] = flipped;
+    if (a.dataset.pairId === b.dataset.pairId) {
+      lock = true;
+      setTimeout(() => {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        matches++;
+        matchesEl.textContent = matches;
+        flipped = [];
+        lock = false;
+        if (matches === pairs.length) {
+          stopTimer();
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          finalMoves.textContent = moves;
+          finalTime.textContent = formatTime(elapsed);
+          resultOverlay.classList.add('show');
+        }
+      }, 350);
+    } else {
+      lock = false; // 不鎖住操作，讓使用者可以隨時點擊任一張卡片單獨翻回
+      flipBackTimer = setTimeout(() => {
+        a.classList.remove('flipped');
+        b.classList.remove('flipped');
+        flipped = [];
+      }, 700);
+    }
+  }
+}
+
+function reviewAnswers() {
+  resultOverlay.classList.remove('show');
+  board.style.display = 'none';
+  document.querySelector('.button-group').style.display = 'none';
+
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = '';
+
+  pairs.forEach((p, idx) => {
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.textContent = (idx + 1) + '. ' + p.base + ' - ' + p.past;
+    reviewList.appendChild(item);
+  });
+
+  document.getElementById('reviewContainer').classList.add('show');
+}
+
+startGame();
+</script>
+</body>
+</html>
