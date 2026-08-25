@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>單字配對遊戲</title>
+<title>單字填空</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -277,7 +277,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>單字配對遊戲</h1>
+  <h1>單字填空</h1>
   <p class="subtitle">選擇單字，點擊空白填入</p>
 
   <div class="stats">
@@ -324,15 +324,15 @@
 const shuffleSentences = 1;
 
 const sentences = [
-  { word: 'facile', wordMeaning: 'facile 膚淺的 adj.', sentence: 'This problem requires more than just a ____ solution.', translation: '這個問題需要比簡單的解決方案更多的東西。' },
-  { word: 'vociferous', wordMeaning: 'vociferous 喧嚷 adj.', sentence: 'Greenpeace is a small but ____ organization.', translation: '綠色和平是一個規模不大但聲音響亮的組織。' },
-  { word: 'milestone', wordMeaning: 'milestone 里程碑 n.', sentence: 'The discovery of antibiotics is an important ____ in medical history.', translation: '抗生素的發現是醫學史上一個重要的里程碑。' },
-  { word: 'eloquently', wordMeaning: 'eloquently 雄辯地 adv.', sentence: 'The speaker ____ presented to the rally her plead for world peace.', translation: '演講人在集會上雄辯地陳述了她對世界和平的呼籲。' },
-  { word: 'havoc', wordMeaning: 'havoc 大破壞 n.', sentence: 'News of the pregnancy wreaked ____ on their plans.', translation: '懷孕的消息完全打亂了他們的計劃。' },
+  { word: 'assess', wordMeaning: 'assess 評估 v.', sentence: 'The government is ____ing the damage caused by the typhoon.', translation: '政府正在評估颱風造成的損害。' },
+  { word: 'glimpse', wordMeaning: 'glimpse 一瞥、看見 v.', sentence: 'I only had a ____ of the interior before the door was shut.', translation: '門關上之前，我只瞥見了內部一眼。' },
+  { word: 'intensify', wordMeaning: 'intensify 加強、升高 v.', sentence: 'The conflict quickly ____ied and involved several nations.', translation: '衝突迅速升高，涉及幾個國家。' },
+  { word: 'generate', wordMeaning: 'generate 產生、引起 v.', sentence: 'These changes are likely to ____ controversy.', translation: '這些改變可能會引發爭議。' },
+  { word: 'ingenious', wordMeaning: 'ingenious 聰明的、巧妙的 adj.', sentence: 'Plants and animals adapt to their environments in ____ ways.', translation: '動植物各有妙法來適應環境。' },
 ];
 
 // 干擾選項：這些字會出現在上方，但永遠沒有對應句子，點擊配對永遠失敗
-//const distractors = ['干擾1', '干擾2', '干擾3', '干擾4', '干擾5'];
+//const distractors = ['', '', '', '', '干擾5'];
 // 沒有干擾項時保持空陣列 []
 const distractors = [];
 
