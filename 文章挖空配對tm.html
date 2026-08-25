@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>段落挖空配對</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px 60px;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Nunito',sans-serif;color:#2B3A55;min-height:100vh}
+.wrap{max-width:680px;margin:0 auto}
+h1{text-align:center;font-size:28px;margin:0 0 8px}
+.subtitle{text-align:center;font-size:14px;color:#666;margin-bottom:24px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.stat-card,.instruction,.word-buttons,.passage,.review-card{background:white;border:.5px solid #ddd;border-radius:12px}
+.stat-card{padding:12px;text-align:center;border-radius:8px}
+.stat-label{font-size:12px;color:#999;margin-bottom:6px}
+.stat-value{font-size:18px;font-weight:600}
+.instruction{padding:12px;margin-bottom:16px;font-size:13px;color:#666;line-height:1.6}
+.word-buttons{padding:12px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px}
+.word-btn{background:white;border:.5px solid #ccc;border-radius:6px;padding:8px 12px;font-size:16px;cursor:pointer;color:#2B3A55}
+.word-btn:hover{background:rgba(176,196,222,.18)}
+.word-btn[data-selected="true"]{background:rgba(176,196,222,.42);color:#2B3A55;border-color:rgba(176,196,222,.85)}
+.word-btn.completed{background:rgba(176,196,222,.28);border-color:rgba(176,196,222,.80);color:#5E6F86;opacity:.5;cursor:default}
+.word-btn.distractor-flash{background:#FDE8E8;border-color:#E24B4A;color:#8B2323}
+.passage{padding:20px;margin-bottom:20px;font-size:16px;line-height:2.05;white-space:pre-wrap}
+.blank{display:inline-block;min-width:96px;min-height:34px;padding:2px 10px;margin:2px 3px;text-align:center;background:rgba(230,216,156,.30);color:#7A6B2F;border:1px dashed rgba(196,174,86,.75);border-radius:6px;cursor:pointer;font-weight:600;line-height:1.7}
+.blank.correct{background:rgba(176,196,222,.28);color:#5E6F86;border:1px solid rgba(176,196,222,.80);cursor:default}
+.blank.incorrect{background:#FDE8E8;color:#8B2323;border-color:#E24B4A}
+.result-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);align-items:center;justify-content:center;z-index:1000}
+.result-overlay.show{display:flex}
+.result-modal{background:white;border-radius:12px;padding:24px;max-width:400px;width:90%;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.result-title{font-size:18px;font-weight:600;margin-bottom:12px}
+.result-stat{margin-bottom:16px}
+.result-stat-label{font-size:12px;color:#999;margin-bottom:4px}
+.result-stat-value{font-size:24px;font-weight:600;color:#6F86A3}
+.result-button-group{display:flex;gap:10px}
+.result-button,.back-btn{background:rgba(176,196,222,.82);color:#2B3A55;border:none;border-radius:6px;padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer}
+.result-button{flex:1}
+.result-button.secondary,.back-btn{background:rgba(230,216,156,.22);color:#2B3A55;border:1px solid rgba(196,174,86,.65)}
+.review-container{display:none;margin-top:20px}
+.review-container.show{display:block}
+.review-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.review-header h2{margin:0;font-size:20px}
+.review-card{padding:16px;margin-bottom:12px}
+.review-title{font-size:13px;color:#999;margin-bottom:10px;font-weight:600}
+.review-answer-list{display:flex;flex-wrap:wrap;gap:8px}
+.review-answer-tag,.review-distractor-tag{border-radius:6px;padding:6px 10px;font-size:13px}
+.review-answer-tag{background:rgba(176,196,222,.28);border:.5px solid rgba(176,196,222,.80);color:#5E6F86}
+.review-distractor-tag{background:#FDE8E8;border:.5px solid #E24B4A;color:#8B2323}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>段落挖空配對</h1>
+<p class="subtitle">選擇上方內容，填入正確空格</p>
+
+<div class="stats">
+  <div class="stat-card"><div class="stat-label">⏱ 時間</div><div class="stat-value" id="timer">0:00</div></div>
+  <div class="stat-card"><div class="stat-label">✓ 配對</div><div class="stat-value" id="matched">0/0</div></div>
+</div>
+
+<div class="instruction">先點選上方一個內容，再點正確的空格。</div>
+<div class="word-buttons" id="wordButtonsContainer"></div>
+<div class="passage" id="passageContainer"></div>
+
+<div class="review-container" id="reviewContainer">
+  <div class="review-header">
+    <h2>📋 複習</h2>
+    <button class="back-btn" onclick="location.reload()">重新開始</button>
+  </div>
+  <div class="review-card">
+    <div class="review-title">正確答案</div>
+    <div class="review-answer-list" id="reviewAnswersList"></div>
+  </div>
+  <div class="review-card" id="reviewDistractorsCard">
+    <div class="review-title">干擾選項</div>
+    <div class="review-answer-list" id="reviewDistractorsList"></div>
+  </div>
+</div>
+
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-modal">
+    <div class="result-title">🎉 完成！</div>
+    <div class="result-stat">
+      <div class="result-stat-label">答題時間</div>
+      <div class="result-stat-value" id="finalTime">0:00</div>
+    </div>
+    <div class="result-button-group">
+      <button class="result-button secondary" onclick="reviewAnswers()">複習</button>
+      <button class="result-button" onclick="location.reload()">重新開始</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+/*
+出題方式：
+在 passage 裡，把要挖空的內容用 {{ }} 包起來。
+程式會自動把 {{ }} 裡的內容變成空格，並把所有答案放到上方。
+
+沒有干擾選項時：
+const distractors = [];
+*/
+
+const passage = `TCA cycle occurs mainly in the {{mitochondrial matrix}}. Acetyl-CoA first combines with {{oxaloacetate}} to form {{citrate}}. During the cycle, carbon atoms are released as {{CO₂}}, and reduced coenzymes are generated for the electron transport chain.`;
+
+// 干擾選項：自行增減；不需要時保持空陣列 []，需要時['1', '2']
+const distractors = ['cytosol', 'pyruvate'];
+
+let selectedOption = null;
+let matchedCount = 0;
+let startTime = Date.now();
+let timerInterval = null;
+let answerItems = [];
+
+function parsePassage() {
+  const regex = /\{\{(.*?)\}\}/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  let id = 0;
+
+  while ((match = regex.exec(passage)) !== null) {
+    if (match.index > lastIndex) parts.push({type:'text',text:passage.slice(lastIndex,match.index)});
+    parts.push({type:'blank',answer:match[1],id:'blank-'+id});
+    answerItems.push({text:match[1],blankId:'blank-'+id,isDistractor:false});
+    id++;
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < passage.length) parts.push({type:'text',text:passage.slice(lastIndex)});
+  return parts;
+}
+
+function initGame() {
+  answerItems = [];
+  const parts = parsePassage();
+  document.getElementById('matched').textContent = '0/' + answerItems.length;
+  renderOptions();
+  renderPassage(parts);
+  startTimer();
+}
+
+function renderOptions() {
+  const container = document.getElementById('wordButtonsContainer');
+  const allOptions = [
+    ...answerItems,
+    ...distractors.map((text,index)=>({text,blankId:'distractor-'+index,isDistractor:true}))
+  ].sort(()=>Math.random()-.5);
+
+  allOptions.forEach(item=>{
+    const btn=document.createElement('button');
+    btn.className='word-btn';
+    btn.textContent=item.text;
+    btn.dataset.distractor=item.isDistractor?'true':'false';
+    btn.onclick=()=>selectOption(btn,item);
+    container.appendChild(btn);
+  });
+}
+
+function renderPassage(parts) {
+  const container=document.getElementById('passageContainer');
+  parts.forEach(part=>{
+    if(part.type==='text'){
+      container.appendChild(document.createTextNode(part.text));
+    }else{
+      const blank=document.createElement('span');
+      blank.className='blank';
+      blank.textContent='____';
+      blank.dataset.blankId=part.id;
+      blank.onclick=()=>fillBlank(blank);
+      container.appendChild(blank);
+    }
+  });
+}
+
+function selectOption(btn,item){
+  const prev=document.querySelector('.word-btn[data-selected="true"]');
+  if(prev) prev.removeAttribute('data-selected');
+  selectedOption={...item,button:btn};
+  btn.setAttribute('data-selected','true');
+}
+
+function fillBlank(blankEl){
+  if(!selectedOption || blankEl.classList.contains('correct')) return;
+
+  if(selectedOption.isDistractor){
+    flashIncorrect(blankEl,selectedOption.button);
+    return;
+  }
+
+  if(selectedOption.blankId===blankEl.dataset.blankId){
+    blankEl.textContent=selectedOption.text;
+    blankEl.classList.add('correct');
+    blankEl.onclick=null;
+
+    selectedOption.button.classList.add('completed');
+    selectedOption.button.onclick=null;
+    selectedOption.button.removeAttribute('data-selected');
+
+    matchedCount++;
+    document.getElementById('matched').textContent=matchedCount+'/'+answerItems.length;
+    selectedOption=null;
+
+    if(matchedCount===answerItems.length) showResults();
+  }else{
+    flashIncorrect(blankEl,selectedOption.button);
+  }
+}
+
+function flashIncorrect(blankEl,optionBtn){
+  blankEl.classList.add('incorrect');
+  if(optionBtn && optionBtn.dataset.distractor==='true') optionBtn.classList.add('distractor-flash');
+  setTimeout(()=>{
+    blankEl.classList.remove('incorrect');
+    if(optionBtn) optionBtn.classList.remove('distractor-flash');
+  },500);
+}
+
+function startTimer(){
+  startTime=Date.now();
+  timerInterval=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    const mins=Math.floor(elapsed/60);
+    const secs=elapsed%60;
+    document.getElementById('timer').textContent=mins+':'+(secs<10?'0':'')+secs;
+  },100);
+}
+
+function showResults(){
+  clearInterval(timerInterval);
+  const elapsed=Math.floor((Date.now()-startTime)/1000);
+  const mins=Math.floor(elapsed/60);
+  const secs=elapsed%60;
+  document.getElementById('finalTime').textContent=mins+':'+(secs<10?'0':'')+secs;
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function reviewAnswers(){
+  document.getElementById('resultOverlay').classList.remove('show');
+  document.getElementById('wordButtonsContainer').style.display='none';
+  document.getElementById('reviewContainer').classList.add('show');
+
+  const answersList=document.getElementById('reviewAnswersList');
+  answerItems.forEach((item,index)=>{
+    const tag=document.createElement('span');
+    tag.className='review-answer-tag';
+    tag.textContent=(index+1)+'. '+item.text;
+    answersList.appendChild(tag);
+  });
+
+  const card=document.getElementById('reviewDistractorsCard');
+  const list=document.getElementById('reviewDistractorsList');
+
+  if(distractors.length===0){
+    card.style.display='none';
+  }else{
+    distractors.forEach(text=>{
+      const tag=document.createElement('span');
+      tag.className='review-distractor-tag';
+      tag.textContent=text;
+      list.appendChild(tag);
+    });
+  }
+}
+
+initGame();
+</script>
+</body>
+</html>
