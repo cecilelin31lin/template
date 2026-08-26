@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>單字搜尋遊戲 Word Search</title>
+<title>word puzzle</title>
 <style>
   * { box-sizing: border-box; }
   html, body { overscroll-behavior: none; }
@@ -107,9 +107,9 @@
     font-weight: 600;
   }
   .clue-item.found .clue-number {
-    background: #E8F9EF;
-    border-color: #4CAF7D;
-    color: #4CAF7D;
+    background: rgba(70,129,137,.16);
+    border-color: #468189;
+    color: #468189;
   }
 
   .grid-container {
@@ -156,6 +156,9 @@
   .cell.found {
     color: #2B3A55;
   }
+  .cell.found.selected {
+    box-shadow: inset 0 0 0 2px rgba(55,138,221,.75);
+  }
 
   .confirm-bar {
     display: flex;
@@ -173,10 +176,10 @@
     transition: all 0.2s;
   }
   .confirm-btn {
-    background: rgba(196,174,86,.85);
+    background: #B0C4DE;
     color: #2B3A55;
   }
-  .confirm-btn:hover { background: rgba(196,174,86,1); }
+  .confirm-btn:hover { background: #9FB5D1; }
   .confirm-btn:disabled {
     background: #eee;
     color: #aaa;
@@ -184,10 +187,10 @@
   }
   .clear-btn {
     background: white;
-    color: #7A6B2F;
-    border: 1px solid rgba(196,174,86,.85);
+    color: #2B3A55;
+    border: 1px solid #B0C4DE;
   }
-  .clear-btn:hover { background: rgba(230,216,156,.30); }
+  .clear-btn:hover { background: rgba(176,196,222,.30); }
 
   .feedback {
     display: none;
@@ -200,9 +203,9 @@
   }
   .feedback.show { display: block; }
   .feedback.success {
-    background: #E8F9EF;
-    border: 0.5px solid #4CAF7D;
-    color: #2B6E4F;
+    background: rgba(70,129,137,.16);
+    border: 0.5px solid #468189;
+    color: #468189;
   }
   .feedback.error {
     background: #FDE8E8;
@@ -308,7 +311,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>單字搜尋遊戲 Word Search</h1>
+  <h1>word puzzle</h1>
   <p class="subtitle">在字母格中找出隱藏的單字</p>
 
   <div class="stats">
@@ -381,7 +384,7 @@ const words = [
 ];
 
 // 配色（依序循環使用於已找到的單字標記）
-const palette = ['#e7d8c9', '#b2967d', '#e7d8c9', '#b2967d', '#e7d8c9', '#b2967d'];
+const palette = ['#e7d8c9', '#eee4e1', '#d3c0ad', '#e7d8c9', '#d3c0ad', '#eee4e1'];
 
 let gridSize = 0;
 let grid = [];
@@ -522,25 +525,17 @@ function onCellClick(r, c, cellEl) {
     return;
   }
 
-  if (cellEl.classList.contains('found')) return;
-
   selectedCells.push([r, c]);
   updateSelectedDisplay();
 }
 
 function updateSelectedDisplay() {
   document.querySelectorAll('.cell.selected').forEach(el => {
-    if (!el.classList.contains('found')) {
-      el.classList.remove('selected');
-      el.style.background = '';
-      el.style.color = '';
-    }
+    el.classList.remove('selected');
   });
   selectedCells.forEach(([r,c]) => {
     const el = getCellEl(r,c);
-    if (!el.classList.contains('found')) {
-      el.classList.add('selected');
-    }
+    if (el) el.classList.add('selected');
   });
   document.getElementById('confirmBtn').disabled = selectedCells.length === 0;
 }
@@ -553,9 +548,8 @@ function clearSelection() {
 
 function cellsMatch(cellsA, cellsB) {
   if (cellsA.length !== cellsB.length) return false;
-  const forward = cellsA.every((cell, i) => cell[0] === cellsB[i][0] && cell[1] === cellsB[i][1]);
-  const backward = cellsA.every((cell, i) => cell[0] === cellsB[cellsB.length-1-i][0] && cell[1] === cellsB[cellsB.length-1-i][1]);
-  return forward || backward;
+  const setB = new Set(cellsB.map(([r,c]) => `${r},${c}`));
+  return cellsA.every(([r,c]) => setB.has(`${r},${c}`));
 }
 
 function confirmSelection() {
