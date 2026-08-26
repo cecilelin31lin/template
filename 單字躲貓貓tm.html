@@ -502,7 +502,11 @@ function renderClueList() {
     let displayClue = p.sentence;
     const escaped = p.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(escaped, 'ig');
-    displayClue = displayClue.replace(regex, '____');
+    const firstLetter = p.word.charAt(0);
+    const lastLetter = p.word.charAt(p.word.length - 1);
+    const middleBlanks = '_'.repeat(Math.max(p.word.length - 2, 0));
+    const wordHint = firstLetter + middleBlanks + lastLetter;
+    displayClue = displayClue.replace(regex, wordHint);
     text.textContent = displayClue;
 
     item.appendChild(num);
