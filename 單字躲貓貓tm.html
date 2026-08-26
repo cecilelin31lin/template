@@ -662,6 +662,13 @@ function initGame() {
   renderGrid();
   renderClueList();
   startTimer();
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmSelection();
+    }
+  });
 }
 
 initGame();
