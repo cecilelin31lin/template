@@ -485,6 +485,7 @@ function renderGrid() {
 }
 
 // 找出句子裡跟 word 字根相符的完整單字（不論時態、單複數等變化形），並替換成提示格式
+// 提示規則：保留該單字的第一個字母，中間（含字根其餘部分）用底線遮住，但保留原本單字後綴的變化字尾（如 ing / ed / s）完整顯示
 function replaceWordInClue(sentence, word) {
   // 字根：去掉最後 1~2 個字母，至少保留 3 個字母當字根，避免太短造成誤判
   const stemLen = Math.max(3, word.length - 2);
@@ -492,18 +493,19 @@ function replaceWordInClue(sentence, word) {
   const stemEscaped = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   // 比對「字根開頭 + 任意字母結尾」的完整英文單字（用單字邊界，避免切到其他單字中間）
-  const regex = new RegExp('\\b(' + stemEscaped + '[a-zA-Z]*)\\b', 'i');
+  const regex = new RegExp('\\b(' + stemEscaped + ')([a-zA-Z]*)\\b', 'i');
   const match = sentence.match(regex);
 
   if (!match) return sentence; // 沒抓到就原樣返回，避免誤刪內容
 
-  const matchedWord = match[1];
-  const firstLetter = matchedWord.charAt(0);
-  const lastLetter = matchedWord.charAt(matchedWord.length - 1);
-  const middleBlanks = '_'.repeat(Math.max(matchedWord.length - 2, 1));
-  const hint = firstLetter + middleBlanks + lastLetter;
+  const matchedStem = match[1];   // 句子中實際比對到、屬於字根的部分
+  const suffix = match[2];        // 字根後面剩餘的字尾變化（如 ing / ed / s），要保留顯示
 
-  return sentence.replace(matchedWord, hint);
+  const firstLetter = matchedStem.charAt(0);
+  const middleBlanks = '_'.repeat(Math.max(matchedStem.length - 1, 1));
+  const hint = firstLetter + middleBlanks + suffix;
+
+  return sentence.replace(match[0], hint);
 }
 
 function renderClueList() {
@@ -570,14 +572,24 @@ function cellsMatch(cellsA, cellsB) {
   return cellsA.every(([r,c]) => setB.has(`${r},${c}`));
 }
 
+function lettersMatch(selectedLetters, targetWord) {
+  if (selectedLetters.length !== targetWord.length) return false;
+  const sortedSelected = selectedLetters.split('').sort().join('');
+  const sortedTarget = targetWord.split('').sort().join('');
+  return sortedSelected === sortedTarget;
+}
+
 function confirmSelection() {
   if (selectedCells.length === 0) return;
+
+  // 把選取的格子字母湊起來，跟單字比對（不論點擊順序，只要字母組合相符即可）
+  const selectedLetters = selectedCells.map(([r,c]) => grid[r][c]).join('');
 
   for (let i=0;i<placements.length;i++){
     const p = placements[i];
     if (foundWords.has(i)) continue;
-    if (cellsMatch(p.cells, selectedCells)) {
-      markFound(i);
+    if (lettersMatch(selectedLetters, p.word)) {
+      markFoundByCells(i, selectedCells);
       showFeedback(true, '✓ 找到了：' + p.word);
       selectedCells = [];
       updateSelectedDisplay();
@@ -601,12 +613,12 @@ function hideFeedback() {
   document.getElementById('feedback').classList.remove('show');
 }
 
-function markFound(idx) {
+function markFoundByCells(idx, cells) {
   const p = placements[idx];
   foundWords.add(idx);
 
   const color = palette[p.colorIndex];
-  p.cells.forEach(([r,c]) => {
+  cells.forEach(([r,c]) => {
     const el = getCellEl(r,c);
     el.classList.add('found');
     el.classList.remove('selected');
