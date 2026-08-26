@@ -372,15 +372,15 @@
 word: 英文單字（會自動轉大寫比對）
 meaning: 單字中文意思
 pos: 詞性，例如 n. / v. / adj. / adv.
-sentence: 英文例句
+sentence: 英文例句（可以是單字的任何變化形，如過去式/現在分詞，程式會自動用字根模糊比對找出並轉成底線提示）
 translation: 中文翻譯
 */
 const words = [
-  { word: 'FACILE', meaning: '膚淺的', pos: 'adj.', sentence: 'This problem requires more than just a facile solution.', translation: '這個問題需要比簡單的解決方案更多的東西。' },
-  { word: 'HAVOC', meaning: '大破壞', pos: 'n.', sentence: 'News of the pregnancy wreaked havoc on their plans.', translation: '懷孕的消息完全打亂了他們的計劃。' },
-  { word: 'MILESTONE', meaning: '里程碑', pos: 'n.', sentence: 'The discovery of antibiotics is an important milestone in medical history.', translation: '抗生素的發現是醫學史上一個重要的里程碑。' },
-  { word: 'ELOQUENTLY', meaning: '雄辯地', pos: 'adv.', sentence: 'The speaker eloquently presented to the rally her plead for world peace.', translation: '演講人在集會上雄辯地陳述了她對世界和平的呼籲。' },
-  { word: 'VOCIFEROUS', meaning: '喧嚷的', pos: 'adj.', sentence: 'Greenpeace is a small but vociferous organization.', translation: '綠色和平是一個規模不大但聲音響亮的組織。' },
+  { word: 'assess', meaning: '評估', pos: 'v.', sentence: 'The government is assessing the damage caused by the typhoon.', translation: '政府正在評估颱風造成的損害。' },
+  { word: 'glimpse', meaning: '一瞥、看見', pos: 'v.', sentence: 'I only had a glimpse of the interior before the door was shut.', translation: '門關上之前，我只瞥見了內部一眼。' },
+  { word: 'intensify', meaning: '加強、升高', pos: 'v.', sentence: 'The conflict quickly intensified and involved several nations.', translation: '衝突迅速升高，涉及幾個國家。' },
+  { word: 'generate', meaning: '產生、引起', pos: 'v.', sentence: 'These changes are likely to generate controversy.', translation: '這些改變可能會引發爭議。' },
+  { word: 'ingenious', meaning: '聰明的、巧妙的', pos: 'adj.', sentence: 'Plants and animals adapt to their environments in ingenious ways.', translation: '動植物各有妙法來適應環境。' },
 ];
 
 // 配色（依序循環使用於已找到的單字標記）
@@ -484,6 +484,28 @@ function renderGrid() {
   }
 }
 
+// 找出句子裡跟 word 字根相符的完整單字（不論時態、單複數等變化形），並替換成提示格式
+function replaceWordInClue(sentence, word) {
+  // 字根：去掉最後 1~2 個字母，至少保留 3 個字母當字根，避免太短造成誤判
+  const stemLen = Math.max(3, word.length - 2);
+  const stem = word.slice(0, stemLen);
+  const stemEscaped = stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // 比對「字根開頭 + 任意字母結尾」的完整英文單字（用單字邊界，避免切到其他單字中間）
+  const regex = new RegExp('\\b(' + stemEscaped + '[a-zA-Z]*)\\b', 'i');
+  const match = sentence.match(regex);
+
+  if (!match) return sentence; // 沒抓到就原樣返回，避免誤刪內容
+
+  const matchedWord = match[1];
+  const firstLetter = matchedWord.charAt(0);
+  const lastLetter = matchedWord.charAt(matchedWord.length - 1);
+  const middleBlanks = '_'.repeat(Math.max(matchedWord.length - 2, 1));
+  const hint = firstLetter + middleBlanks + lastLetter;
+
+  return sentence.replace(matchedWord, hint);
+}
+
 function renderClueList() {
   const container = document.getElementById('clueListContainer');
   container.innerHTML = '';
@@ -499,15 +521,7 @@ function renderClueList() {
     num.textContent = idx + 1;
 
     const text = document.createElement('div');
-    let displayClue = p.sentence;
-    const escaped = p.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(escaped, 'ig');
-    const firstLetter = p.word.charAt(0);
-    const lastLetter = p.word.charAt(p.word.length - 1);
-    const middleBlanks = '_'.repeat(Math.max(p.word.length - 2, 0));
-    const wordHint = firstLetter + middleBlanks + lastLetter;
-    displayClue = displayClue.replace(regex, wordHint);
-    text.textContent = displayClue;
+    text.textContent = replaceWordInClue(p.sentence, p.word);
 
     item.appendChild(num);
     item.appendChild(text);
