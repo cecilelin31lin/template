@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基礎生化與細胞生物學3</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: #f5f5f5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Nunito', sans-serif;
+    color: #2B3A55;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    color: #2B3A55;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+  
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2B3A55;
+  }
+  
+  .question-container {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    min-height: 200px;
+  }
+  
+  .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 0.5px solid #ddd;
+  }
+  
+  .question-progress {
+    font-size: 13px;
+    color: #999;
+  }
+  
+  .question-type {
+    background: #378ADD;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  
+  .question-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #2B3A55;
+    margin-bottom: 20px;
+  }
+  
+  .content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .input-field {
+    padding: 10px;
+    border: 0.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  
+  .option-btn {
+    padding: 10px;
+    border: 0.5px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .option-btn:hover {
+    border-color: #999;
+    background: #f9f9f9;
+  }
+  .option-btn[data-selected="true"] {
+    background: #378ADD;
+    color: white;
+    border-color: #378ADD;
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  
+  button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-submit {
+    background: #378ADD;
+    color: white;
+  }
+  .btn-submit:hover {
+    background: #2970c7;
+  }
+  
+  .feedback {
+    display: none;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+  .feedback.show {
+    display: block;
+  }
+  .feedback.success {
+    background: #E8F9EF;
+    border: 0.5px solid #4CAF7D;
+    color: #2B6E4F;
+  }
+  .feedback.error {
+    background: #FDE8E8;
+    border: 0.5px solid #E24B4A;
+    color: #8B2323;
+  }
+  
+  .explanation {
+    font-size: 13px;
+    margin-top: 8px;
+    display: block;
+  }
+  
+  .result-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .result-overlay.show {
+    display: flex;
+  }
+  
+  .result-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .result-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2B3A55;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  
+  .result-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .result-stat {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  
+  .result-stat-label {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 4px;
+  }
+  
+  .result-stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2B3A55;
+  }
+  
+  .result-details {
+    margin-bottom: 20px;
+  }
+  
+  .result-details-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  
+  .result-item {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    font-size: 12px;
+    border-bottom: 0.5px solid #eee;
+  }
+  
+  .result-item.correct {
+    color: #4CAF7D;
+  }
+  
+  .result-item.incorrect {
+    color: #E24B4A;
+  }
+  
+  .result-button {
+    background: #378ADD;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .result-button:hover {
+    background: #2970c7;
+  }
+
+  .review-container {
+    display: none;
+  }
+  .review-container.show {
+    display: block;
+  }
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .review-header h2 {
+    margin: 0;
+    font-size: 22px;
+  }
+  .review-card {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .review-card.first-correct { border-left: 4px solid #4CAF7D; }
+  .review-card.had-wrong { border-left: 4px solid #E24B4A; }
+  .review-q {
+    font-weight: 600;
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .review-line {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 4px;
+  }
+  .review-wrong { color: #8B2323; }
+  .review-correct { color: #2B6E4F; }
+  .back-btn {
+    background: #378ADD;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>基礎生化與細胞生物學3</h1>
+  <p class="subtitle">完成所有題目</p>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">題目</div>
+      <div class="stat-value" id="progress">1/2</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">⏱ 時間</div>
+      <div class="stat-value" id="timer">0:00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">✓ 正確</div>
+      <div class="stat-value" id="correct">0</div>
+    </div>
+  </div>
+
+  <div class="question-container" id="questionContainer">
+    <div class="question-header">
+      <div class="question-progress" id="questionProgress">第 1 題</div>
+      <div class="question-type" id="questionType">類型</div>
+    </div>
+    <div class="question-text" id="questionText">題目文字</div>
+    <div class="content-area" id="contentArea"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn-submit" id="submitBtn" onclick="submitAnswer()">確認答案</button>
+  </div>
+
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-modal">
+      <div class="result-title">🎉 測驗完成！</div>
+      
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="result-stat-label">正確率</div>
+          <div class="result-stat-value" id="accuracy">0%</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-label">正確數</div>
+          <div class="result-stat-value" id="finalCorrect">0</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-label">用時</div>
+          <div class="result-stat-value" id="finalTime">0:00</div>
+        </div>
+      </div>
+      
+      <div class="result-details">
+        <div class="result-details-title">答題記錄</div>
+        <div id="resultDetails"></div>
+      </div>
+      
+      <button class="result-button" onclick="location.reload()">重新開始</button>
+    </div>
+  </div>
+
+  <div class="review-container" id="reviewContainer">
+    <div class="review-header">
+      <h2>📋 答題複習</h2>
+      <button class="back-btn" onclick="location.reload()">重新開始</button>
+    </div>
+    <div id="reviewList"></div>
+  </div>
+
+</div>
+
+<script>
+const allQuestions = [
+  { type: 3, question: '下列何者不是腫瘤抑制因子（Tumor Suppressor）？', answer: 'Growth factor', options: ['p53', 'p21', 'pRb', 'Growth factor'], explanation: 'p53、p21、pRb皆為腫瘤抑制因子，功能是抑制細胞週期進行、促進DNA修復或凋亡。Growth factor（生長因子）則是促進細胞增殖的訊號分子，透過活化RTK等受體啟動下游路徑（如Ras-MAPK）促進細胞分裂，屬於原致癌基因（proto-oncogene）範疇，而非腫瘤抑制因子。腫瘤抑制因子功能喪失會致癌，原致癌基因功能過度活化會致癌。' },
+  { type: 3, question: 'Fe²⁺以non-heme形式存在時，主要分布在____中', answer: 'Fe-S cluster', options: ['Fe-S cluster', 'Cytochrome', 'Hemoglobin', 'Myoglobin'], explanation: 'Heme(血基質)存在於Cytochrome(細胞色素)、Hb、Mb 中；Non-heme則存在於Fe-S cluster中' },
+  { type: 9, question: '動物的細胞比植物細胞大', answer: false, explanation: '植物的比較大，因為植物有central vacuole' },
+  { type: 3, question: '下列關於葡萄糖轉運蛋白（GLUT）的敘述，何者正確？', answer: 'GLUT2的Km值高，親和力低，適合作為血糖濃度的感應器', options: ['GLUT1主要表現於骨骼肌與脂肪組織，且需要insulin刺激才能運輸葡萄糖', 'GLUT5主要負責運輸葡萄糖，具有高度insulin依賴性', 'GLUT2的Km值高，親和力低，適合作為血糖濃度的感應器', 'GLUT4廣泛分布於全身細胞，屬於insulin-independent的轉運蛋白'], explanation: 0 },
+  { type: 3, question: '下列有關APC（Anaphase Promoting Complex）的敘述，何者錯誤？', answer: 'APC的活化與MPF（M-phase Promoting Factor）無關，兩者是各自獨立、互不影響的調控系統', options: ['APC是一種E3泛素連接酶（ubiquitin ligase），能將受質蛋白標記上泛素鏈', 'APC活化後，會促使securin被泛素化並送往蛋白酶體降解，進而釋放separase', 'APC需要在M checkpoint（SAC）通過後才會被活化', 'APC除了促進進入anaphase，也負責降解cyclin B，使CDK1活性下降，讓細胞得以離開M期', 'APC的活化與MPF（M-phase Promoting Factor）無關，兩者是各自獨立、互不影響的調控系統'], explanation: 'MPF（CDK1+cyclin B）促使細胞進入M期並活化APC，而APC活化後又會降解cyclin B使MPF失活，兩者是緊密相關、互相調控的系統，並非各自獨立' },
+  { type: 4, question: '植物的細胞壁___（是／不是）細胞外基質', answer: '是', explanation: 'ECM的成分在cell內產生，由exocytosis分泌到細胞膜外，只要過了細胞膜就是細胞外，所以細胞壁是ECM' },
+  { type: 9, question: '身上所有蛋白質都有一定構型並執行固定功能', answer: false, explanation: 'Intrinsically disordered proteins (IDPs) 是一類在天然生理條件下缺乏穩定三維結構的蛋白質，但依然具有重要的生物學功能' },
+  { type: 4, question: 'lysosome 環境為 pH___，其中H+是透過V-type ATPase進入lysosome ', answer: '5', explanation: 0 },
+  { type: 3, question: 'MPF的活性在哪個階段最高？', answer: 'M期', options: ['M期', 'G1期', 'S期', 'G2期'], explanation: 'MPF是G2進M需要的調控物質，它會使核膜裂解、DNA濃縮，同時他也會促進meta進到ana，所以他在M phase的meta活性最高' },
+  { type: 3, question: '全酵素 (Holoenzyme) 的組成是？', answer: 'Apoenzyme + Cofactor', options: ['Apoenzyme + Cofactor', 'Apoenzyme only', 'Prosthetic group + Metal ion', 'Apoenzyme本身即具活性'], explanation: '全酵素 = 主酶(蛋白質部分) + 輔助因子，缺少Cofactor則Apoenzyme無活性' },
+];
+
+
+const typeNames = {
+  2: '自動選擇',
+  3: '選擇題',
+  4: '填空題',
+  9: '是非題'
+};
+
+let currentQuestion = 0;
+let correctCount = 0; // 第一次就答對的題數
+let startTime = Date.now();
+let timerInterval = null;
+let selectedAnswer = null;
+let answered = false;
+let shuffledQuestions = [];
+let reviewLog = [];
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function initGame() {
+  shuffledQuestions = shuffle(allQuestions);
+  reviewLog = shuffledQuestions.map(q => ({
+    question: q.question,
+    type: q.type,
+    correctAnswer: displayAnswer(q.answer),
+    wrongAttempts: [],
+    gotCorrect: false,
+    explanation: q.explanation
+  }));
+  showQuestion();
+  startTimer();
+
+  document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      if (answered) nextQuestion();
+      else submitAnswer();
+    }
+  });
+}
+
+function displayAnswer(value) {
+  if (value === true) return 'O';
+  if (value === false) return 'X';
+  return String(value);
+}
+
+function showQuestion() {
+  answered = false;
+  selectedAnswer = null;
+  const q = shuffledQuestions[currentQuestion];
+
+  document.getElementById('progress').textContent =
+    (currentQuestion + 1) + '/' + shuffledQuestions.length;
+  document.getElementById('questionProgress').textContent =
+    '第 ' + (currentQuestion + 1) + ' 題 / 共 ' + shuffledQuestions.length + ' 題';
+  document.getElementById('questionType').textContent = typeNames[q.type];
+  document.getElementById('questionText').textContent = q.question;
+
+  const feedback = document.getElementById('feedback');
+  feedback.className = 'feedback';
+  feedback.innerHTML = '';
+
+  const contentArea = document.getElementById('contentArea');
+  contentArea.innerHTML = '';
+
+  if (q.type === 2) renderAutoSelect(q, contentArea);
+  else if (q.type === 3) renderSelect(q, contentArea);
+  else if (q.type === 4) renderText(q, contentArea);
+  else if (q.type === 9) renderTrueFalse(q, contentArea);
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.textContent = '確認答案';
+  submitBtn.onclick = submitAnswer;
+}
+
+function renderAutoSelect(q, container) {
+  generateOptions(q.answer).forEach(opt => makeOptionButton(container, opt, opt));
+}
+
+function renderSelect(q, container) {
+  if (!q.options) return;
+  shuffle(q.options).forEach(opt => makeOptionButton(container, opt, opt));
+}
+
+function makeOptionButton(container, label, value) {
+  const btn = document.createElement('button');
+  btn.className = 'option-btn';
+  btn.textContent = label;
+  btn.onclick = () => selectOption(btn, value);
+  container.appendChild(btn);
+}
+
+function renderText(q, container) {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'input-field';
+  input.placeholder = '輸入答案';
+  input.addEventListener('input', () => selectedAnswer = input.value.trim());
+  container.appendChild(input);
+  input.focus();
+}
+
+function renderTrueFalse(q, container) {
+  makeOptionButton(container, 'O', true);
+  makeOptionButton(container, 'X', false);
+}
+
+function selectOption(btn, value) {
+  if (answered || btn.disabled) return;
+  document.querySelectorAll('.option-btn[data-selected="true"]').forEach(b => {
+    b.removeAttribute('data-selected');
+  });
+  btn.setAttribute('data-selected', 'true');
+  selectedAnswer = value;
+}
+
+function generateOptions(answer) {
+  if (!isNaN(answer) && String(answer).trim() !== '') {
+    const num = Number(answer);
+    return shuffle([
+      String(answer),
+      String(num + 1),
+      String(num - 1),
+      String(num + 2)
+    ]);
+  }
+  return shuffle([String(answer), '以上皆是', '以上皆非', '不一定']);
+}
+
+function normalize(v) {
+  return String(v).trim().toLowerCase();
+}
+
+function isAnswerCorrect(q, value) {
+  if (q.type === 9) return value === q.answer;
+  return normalize(value) === normalize(q.answer);
+}
+
+function submitAnswer() {
+  if (answered) {
+    nextQuestion();
+    return;
+  }
+
+  const q = shuffledQuestions[currentQuestion];
+  const log = reviewLog[currentQuestion];
+  const feedback = document.getElementById('feedback');
+
+  if (selectedAnswer === null || selectedAnswer === '') {
+    feedback.className = 'feedback show error';
+    feedback.textContent = '請先作答';
+    return;
+  }
+
+  if (isAnswerCorrect(q, selectedAnswer)) {
+    answered = true;
+    log.gotCorrect = true;
+
+    if (log.wrongAttempts.length === 0) {
+      correctCount++;
+      document.getElementById('correct').textContent = correctCount;
+    }
+
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      btn.disabled = true;
+      const selected = btn.getAttribute('data-selected') === 'true';
+      if (selected) {
+        btn.style.background = '#E8F9EF';
+        btn.style.borderColor = '#4CAF7D';
+        btn.style.color = '#2B6E4F';
+      }
+    });
+
+    const input = document.querySelector('.input-field');
+    if (input) {
+      input.disabled = true;
+      input.style.background = '#E8F9EF';
+      input.style.borderColor = '#4CAF7D';
+    }
+
+    feedback.className = 'feedback show success';
+    feedback.innerHTML = '✓ 正確' +
+      (q.explanation ? '<span class="explanation">' + escapeHtml(String(q.explanation)) + '</span>' : '');
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.textContent = currentQuestion === shuffledQuestions.length - 1 ? '查看結果' : '下一題';
+    submitBtn.onclick = nextQuestion;
+  } else {
+    log.wrongAttempts.push(displayAnswer(selectedAnswer));
+
+    const selectedBtn = document.querySelector('.option-btn[data-selected="true"]');
+    if (selectedBtn) {
+      selectedBtn.disabled = true;
+      selectedBtn.removeAttribute('data-selected');
+      selectedBtn.style.background = '#FDE8E8';
+      selectedBtn.style.borderColor = '#E24B4A';
+      selectedBtn.style.color = '#8B2323';
+    }
+
+    const input = document.querySelector('.input-field');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+
+    selectedAnswer = null;
+    feedback.className = 'feedback show error';
+    feedback.textContent = '✗ 錯誤，再試一次';
+  }
+}
+
+function nextQuestion() {
+  currentQuestion++;
+  if (currentQuestion >= shuffledQuestions.length) showResults();
+  else showQuestion();
+}
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    document.getElementById('timer').textContent =
+      mins + ':' + (secs < 10 ? '0' : '') + secs;
+  }, 100);
+}
+
+function showResults() {
+  clearInterval(timerInterval);
+
+  const accuracy = Math.round((correctCount / shuffledQuestions.length) * 100);
+  document.getElementById('accuracy').textContent = accuracy + '%';
+  document.getElementById('finalCorrect').textContent =
+    correctCount + '/' + shuffledQuestions.length;
+
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  document.getElementById('finalTime').textContent =
+    mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+  const details = document.getElementById('resultDetails');
+  details.innerHTML = '';
+  reviewLog.forEach((log, i) => {
+    const row = document.createElement('div');
+    row.className = 'result-item ' +
+      (log.wrongAttempts.length === 0 ? 'correct' : 'incorrect');
+    row.textContent = (i + 1) + '. ' +
+      (log.wrongAttempts.length === 0 ? '✓ 第一次答對' : '✗ 曾答錯 ' + log.wrongAttempts.length + ' 次');
+    details.appendChild(row);
+  });
+
+  document.getElementById('resultOverlay').classList.add('show');
+
+  let reviewBtn = document.getElementById('reviewBtn');
+  if (!reviewBtn) {
+    reviewBtn = document.createElement('button');
+    reviewBtn.id = 'reviewBtn';
+    reviewBtn.className = 'result-button';
+    reviewBtn.style.marginBottom = '10px';
+    reviewBtn.textContent = '查看答題複習';
+    reviewBtn.onclick = showReview;
+    const restart = document.querySelector('#resultOverlay .result-button');
+    restart.parentNode.insertBefore(reviewBtn, restart);
+  }
+}
+
+function showReview() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  document.querySelector('.stats').style.display = 'none';
+  document.getElementById('questionContainer').style.display = 'none';
+  document.querySelector('.button-group').style.display = 'none';
+
+  const reviewContainer = document.getElementById('reviewContainer');
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = '';
+
+  reviewLog.forEach((log, i) => {
+    const card = document.createElement('div');
+    card.className = 'review-card ' +
+      (log.wrongAttempts.length === 0 ? 'first-correct' : 'had-wrong');
+
+    let inner = '<div class="review-q">' + (i + 1) + '. ' +
+      escapeHtml(log.question) + '</div>';
+
+    if (log.wrongAttempts.length === 0) {
+      inner += '<div class="review-line review-correct">✓ 第一次答對</div>';
+    } else {
+      inner += '<div class="review-line review-wrong">答錯過：' +
+        log.wrongAttempts.map(escapeHtml).join('、') + '</div>';
+    }
+
+    inner += '<div class="review-line review-correct">正確答案：' +
+      escapeHtml(log.correctAnswer) + '</div>';
+
+    if (log.explanation) {
+      inner += '<div class="review-line">解析：' +
+        escapeHtml(String(log.explanation)) + '</div>';
+    }
+
+    card.innerHTML = inner;
+    reviewList.appendChild(card);
+  });
+
+  reviewContainer.classList.add('show');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+initGame();
+
+</script>
+</body>
+</html>
